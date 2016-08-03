@@ -214,6 +214,8 @@ class Indexer
 					$document[$field] = date('c', strtotime($post->$field));
 				} else if ($field == 'post_content') {
 					$document[$field] = strip_tags($post->$field);
+				} else if ($field == 'post_author') {
+					$document[$field] = (new \WP_User($post->$field))->display_name;
 				} else {
 					$document[$field] = $post->$field;
 				}
