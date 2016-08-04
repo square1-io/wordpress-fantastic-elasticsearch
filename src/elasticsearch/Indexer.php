@@ -131,6 +131,22 @@ class Indexer
 	}
 
 	/**
+	 * Updates all existing documents in the ElasticSearch index that match the query.
+	 *
+	 * @param Array $query The field/value to query the ElasticSearch index.
+	 * @param string $field The field to update in the ElasticSearch index.
+	 * @param string $value The new value to be set in the ElasticSearch index.
+	 **/
+	static function updateAll($query, $field, $value)
+	{
+		$args['query']['match_phrase'] = $query;
+		$args['script']['inline'] = 'ctx._source.'.$field.' = \"'.$value.'\"';
+
+		$client = new \Elastica\Client();
+		$response = $client->request(self::_index(true).'/_update_by_query', \Elastica\Request::POST, $args, array('conflicts'=>'proceed', 'pretty'=>1));
+	}
+
+	/**
 	 * Reads F.E.S configuration and updates ElasticSearch field mapping information (this can corrupt existing data).
 	 * @internal
 	 **/

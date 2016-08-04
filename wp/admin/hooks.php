@@ -61,10 +61,16 @@ class Hooks
 			return;
 		}
 
-		$oldName = $old_user_data->display_name;
-		$name = (new \WP_User($user_id))->display_name;
-		echo $oldName.' -> '.$name;
-		exit;
+		$old_name = $old_user_data->display_name;
+		$new_name = (new \WP_User($user_id))->display_name;
+
+		if ($old_name == $new_name) {
+			return;
+		}
+
+		$query = array('author_name' => $old_name);
+
+		Indexer::updateAll($query, 'author_name', $new_name);
 	}
 
 	function swap()
