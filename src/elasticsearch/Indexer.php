@@ -139,11 +139,21 @@ class Indexer
 	 **/
 	static function updateAll($query, $field, $value)
 	{
-		$args['query']['match_phrase'] = $query;
-		$args['script']['inline'] = 'ctx._source.'.$field.' = \"'.$value.'\"';
+		$index = self::_index(false);
 
-		$client = new \Elastica\Client();
-		$response = $client->request(self::_index(true).'/_update_by_query', \Elastica\Request::POST, $args, array('conflicts'=>'proceed', 'pretty'=>1));
+		$args['script']['inline'] = 'ctx._source.'.$field.' = "'.$value.'"';
+		$args['query']['match_phrase'] = $query;
+
+		try {
+			self::_client(true)->request(
+				$index->getName().'/_update_by_query',
+				\Elastica\Request::POST,
+				$args,
+				array('conflicts'=>'proceed')
+			);
+		} catch (\Exception $ex) {
+			// will throw an exception if unable use the '_update_by_query
+		}
 	}
 
 	/**

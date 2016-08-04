@@ -68,9 +68,9 @@ class Hooks
 			return;
 		}
 
-		$query = array('author_name' => $old_name);
+		$query = array('post_author' => $old_name);
 
-		Indexer::updateAll($query, 'author_name', $new_name);
+		Indexer::updateAll($query, 'post_author', $new_name);
 	}
 
 	function swap()
