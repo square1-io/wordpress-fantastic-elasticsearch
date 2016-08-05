@@ -137,22 +137,21 @@ class Indexer
 	 * @param string $field The field to update in the ElasticSearch index.
 	 * @param string $value The new value to be set in the ElasticSearch index.
 	 **/
-	static function updateAll($query, $field, $value)
+	static function updateByQuery($query, $field, $value)
 	{
 		$index = self::_index(false);
 
+		$path = $index->getName().'/_update_by_query';
+
 		$args['script']['inline'] = 'ctx._source.'.$field.' = "'.$value.'"';
-		$args['query']['match_phrase'] = $query;
+		$args['query']['term'] = $query;
+
+		$query = array('conflicts'=>'proceed');
 
 		try {
-			self::_client(true)->request(
-				$index->getName().'/_update_by_query',
-				\Elastica\Request::POST,
-				$args,
-				array('conflicts'=>'proceed')
-			);
-		} catch (\Exception $ex) {
-			// will throw an exception if unable use the '_update_by_query
+			self::_client(true)->request($path, \Elastica\Request::POST, $args, $query);
+		} catch (\Exception $e) {
+			// will throw an exception if error occurs in update
 		}
 	}
 
@@ -315,7 +314,7 @@ class Indexer
 			// detect special field type
 			if (isset($numeric[$field])) {
 				$props['type'] = 'float';
-			} elseif (isset($notanalyzed[$field]) || $kind == 'taxonomy' || $field == 'post_type') {
+			} elseif (isset($notanalyzed[$field]) || $kind == 'taxonomy' || $field == 'post_type' || $field == 'post_author') {
 				$props['index'] = 'not_analyzed';
 			} elseif ($field == 'post_date') {
 				$props['type'] = 'date';
@@ -346,6 +345,13 @@ class Indexer
 			if ($kind == 'taxonomy') {
 				$tax_name_props = array('type' => 'string');
 				$tax_name_props = Config::apply_filters('indexer_map_taxonomy_name', $tax_name_props, $field);
+			}
+
+			// also index taxonomy_name field
+			if ($field == 'post_author') {
+				$author_name_props = array('type' => 'string');
+				$author_name_props = Config::apply_filters('indexer_map_taxonomy_name', $author_name_props, $field);
+				$properties[$field . '_name'] = $author_name_props;
 			}
 
 			$properties[$field] = $props;
