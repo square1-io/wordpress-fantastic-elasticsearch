@@ -19,7 +19,7 @@ $fields = array(
 );
 
 foreach (array_merge(Config::fields(), Config::meta_fields()) as $field) {
-	if ($field != 'post_date' && $field != 'post_type') {
+	if ($field != 'post_date' && $field != 'post_type' && $field != 'post_author') {
 		$fields['numeric']['options'][$field] = $field;
 		$fields['not_analyzed']['options'][$field] = $field;
 	}
