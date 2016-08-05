@@ -134,16 +134,19 @@ class Indexer
 	 * Updates all existing documents in the ElasticSearch index that match the query.
 	 *
 	 * @param Array $query The field/value to query the ElasticSearch index.
-	 * @param string $field The field to update in the ElasticSearch index.
-	 * @param string $value The new value to be set in the ElasticSearch index.
+	 * @param Array $update The key/value data to be set in the ElasticSearch index.
 	 **/
-	static function updateByQuery($query, $field, $value)
+	static function updateByQuery($query, $update)
 	{
 		$index = self::_index(false);
 
 		$path = $index->getName().'/_update_by_query';
 
-		$args['script']['inline'] = 'ctx._source.'.$field.' = "'.$value.'"';
+		$args['script']['inline'] = '';
+		foreach ($update as $key => $value) {
+			$args['script']['inline'] .= 'ctx._source.'.$key.' = "'.$value.'";';
+		}
+
 		$args['query']['term'] = $query;
 
 		$query = array('conflicts'=>'proceed');
@@ -240,7 +243,7 @@ class Indexer
 				} else if ($field == 'post_content') {
 					$document[$field] = strip_tags($post->$field);
 				} else if ($field == 'post_author') {
-					$document[$field] = (new \WP_User($post->$field))->display_name;
+					$document[$field.'_name'] = $document[$field] = (new \WP_User($post->$field))->display_name;
 				} else {
 					$document[$field] = $post->$field;
 				}
@@ -347,10 +350,10 @@ class Indexer
 				$tax_name_props = Config::apply_filters('indexer_map_taxonomy_name', $tax_name_props, $field);
 			}
 
-			// also index taxonomy_name field
+			// also index post_author_name field
 			if ($field == 'post_author') {
 				$author_name_props = array('type' => 'string');
-				$author_name_props = Config::apply_filters('indexer_map_taxonomy_name', $author_name_props, $field);
+				$author_name_props = Config::apply_filters('indexer_map_' . $kind, $author_name_props, $field);
 				$properties[$field . '_name'] = $author_name_props;
 			}
 

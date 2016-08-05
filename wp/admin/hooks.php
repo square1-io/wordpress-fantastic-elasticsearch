@@ -70,7 +70,12 @@ class Hooks
 
 		$query = array('post_author' => $old_name);
 
-		Indexer::updateByQuery($query, 'post_author', $new_name);
+		$update = array(
+			'post_author' => $new_name,
+			'post_author_name'=> $new_name
+		);
+
+		Indexer::updateByQuery($query, $update);
 	}
 
 	function swap()
