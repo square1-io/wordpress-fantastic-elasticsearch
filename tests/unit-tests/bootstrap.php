@@ -19,6 +19,7 @@ namespace elasticsearch{
 		static $terms = array();
 		static $termrel = array();
 		static $posts = array();
+		static $users = array();
 		static $actions = array();
 		static $is = array();
 		static $all_meta_keys = array();
@@ -46,6 +47,18 @@ namespace {
 
 		public function is_main_query(){
 			return $this->is_main_query;
+		}
+	}
+
+	class WP_User{
+		private $user;
+
+		public function __construct($user_id){
+			$this->user = elasticsearch\TestContext::$users[$user_id];
+		}
+
+		public function __get($key) {
+			return $this->user->$key;
 		}
 	}
 
@@ -122,6 +135,13 @@ namespace {
 		$post['ID'] = $index;
 
 		elasticsearch\TestContext::$posts[$index] = (object) $post;
+	}
+
+	function wp_insert_user($user){
+		$index = count(elasticsearch\TestContext::$users) + 1;
+		$user['ID'] = $index;
+
+		elasticsearch\TestContext::$users[$index] = (object) $user;
 	}
 
 	function get_posts($args){

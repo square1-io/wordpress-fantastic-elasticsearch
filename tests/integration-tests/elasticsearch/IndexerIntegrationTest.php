@@ -350,5 +350,94 @@ class IndexerIntegrationTest extends BaseIntegrationTestCase
 		$this->assertEquals('Another Value', $results[1]->some_field);
 		$this->assertEquals('Another Value', $results[2]->some_field);
 	}
+
+	public function testMapAuthor()
+	{
+		register_post_type('post');
+
+		wp_insert_user(array(
+			'user_login' => 'john',
+			'display_name' => 'John Smith'
+		));
+
+		wp_insert_user(array(
+			'user_login' => 'mary',
+			'display_name' => 'Mary Jones'
+		));
+
+		wp_insert_post(array(
+			'post_type' => 'post',
+			'post_author' => '1',
+		));
+
+		wp_insert_post(array(
+			'post_type' => 'post',
+			'post_author' => '1',
+		));
+
+		wp_insert_post(array(
+			'post_type' => 'post',
+			'post_author' => '2',
+		));
+
+		Indexer::_map();
+		Indexer::reindex();
+		$this->index->refresh();
+
+		$search = new \Elastica\Search($this->index->getClient());
+		$search->addIndex($this->index);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('post_author' => 'John Smith'))
+		)))->getResults();
+
+		$this->assertCount(2, $results);
+		$this->assertEquals('John Smith', $results[0]->post_author);
+		$this->assertEquals('John Smith', $results[0]->post_author_name);
+		$this->assertEquals('John Smith', $results[1]->post_author);
+		$this->assertEquals('John Smith', $results[1]->post_author_name);
+
+		$query = array('post_author' => 'John Smith');
+		$update = array(
+			'post_author' => 'Fred Bond',
+			'post_author_name'=> 'Fred Bond'
+		);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('post_author' => 'Mary Jones'))
+		)))->getResults();
+
+		$this->assertCount(1, $results);
+		$this->assertEquals('Mary Jones', $results[0]->post_author);
+		$this->assertEquals('Mary Jones', $results[0]->post_author_name);
+
+		//Update author name
+		Indexer::updateByQuery($query, $update);
+		$this->index->refresh();
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('post_author' => 'John Smith'))
+		)))->getResults();
+
+		$this->assertCount(0, $results);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('post_author' => 'Fred Bond'))
+		)))->getResults();
+
+		$this->assertCount(2, $results);
+		$this->assertEquals('Fred Bond', $results[0]->post_author);
+		$this->assertEquals('Fred Bond', $results[0]->post_author_name);
+		$this->assertEquals('Fred Bond', $results[1]->post_author);
+		$this->assertEquals('Fred Bond', $results[1]->post_author_name);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('post_author' => 'Mary Jones'))
+		)))->getResults();
+
+		$this->assertCount(1, $results);
+		$this->assertEquals('Mary Jones', $results[0]->post_author);
+		$this->assertEquals('Mary Jones', $results[0]->post_author_name);
+	}
 }
 ?>
