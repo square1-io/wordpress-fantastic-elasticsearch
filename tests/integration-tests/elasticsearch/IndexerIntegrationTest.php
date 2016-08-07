@@ -286,5 +286,69 @@ class IndexerIntegrationTest extends BaseIntegrationTestCase
 		$this->assertEquals(1, $results[0]->getId());
 		$this->assertEquals(2, $results[1]->getId());
 	}
+
+	public function testUpdateByQuery()
+	{
+		update_option('fields', array('some_field' => 1));
+		update_option('not_analyzed', array('some_field' => 1));
+
+		register_post_type('post');
+
+		wp_insert_post(array(
+			'post_type' => 'post',
+			'some_field' => 'Some Value',
+		));
+
+		wp_insert_post(array(
+			'post_type' => 'post',
+			'some_field' => 'Some Value',
+		));
+
+		wp_insert_post(array(
+			'post_type' => 'page',
+			'some_field' => 'Another Value',
+		));
+
+		Indexer::_map();
+		Indexer::reindex();
+
+		$this->index->refresh();
+
+		$search = new \Elastica\Search($this->index->getClient());
+		$search->addIndex($this->index);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('some_field' => 'Some Value'))
+		)))->getResults();
+
+		$this->assertCount(2, $results);
+		$this->assertEquals('Some Value', $results[0]->some_field);
+		$this->assertEquals('Some Value', $results[1]->some_field);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('some_field' => 'Another Value'))
+		)))->getResults();
+
+		$this->assertCount(1, $results);
+		$this->assertEquals('Another Value', $results[0]->some_field);
+
+		Indexer::updateByQuery(array('some_field' => 'Some Value'), array('some_field' => 'Another Value'));
+		$this->index->refresh();
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('some_field' => 'Some Value'))
+		)))->getResults();
+
+		$this->assertCount(0, $results);
+
+		$results = $search->search(new \Elastica\Query(array(
+			'query' => array('term' => array('some_field' => 'Another Value'))
+		)))->getResults();
+
+		$this->assertCount(3, $results);
+		$this->assertEquals('Another Value', $results[0]->some_field);
+		$this->assertEquals('Another Value', $results[1]->some_field);
+		$this->assertEquals('Another Value', $results[2]->some_field);
+	}
 }
 ?>
