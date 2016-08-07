@@ -11,6 +11,7 @@ class Hooks
 		add_action('delete_post', array(&$this, 'delete_post'));
 		add_action('trash_post', array(&$this, 'delete_post'));
 		add_action('transition_post_status', array(&$this, 'transition_post'), 10, 3);
+		add_action('profile_update', array(&$this, 'update_author'), 10, 3);
 	}
 
 	function save_post($post_id)
@@ -52,6 +53,29 @@ class Hooks
 		}
 
 		Indexer::delete($post);
+	}
+
+	function update_author($user_id, $old_user_data)
+	{
+		if (!in_array('post_author', Config::fields())) {
+			return;
+		}
+
+		$old_name = $old_user_data->display_name;
+		$new_name = (new \WP_User($user_id))->display_name;
+
+		if ($old_name == $new_name) {
+			return;
+		}
+
+		$query = array('post_author' => $old_name);
+
+		$update = array(
+			'post_author' => $new_name,
+			'post_author_name'=> $new_name
+		);
+
+		Indexer::updateByQuery($query, $update);
 	}
 
 	function swap()

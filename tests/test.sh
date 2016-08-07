@@ -7,7 +7,7 @@ if [ $? -eq 1 ]; then
 
     if [ -z "$EXISTING" ]; then
         echo "Creating ElasticSearch Container"
-        docker run -d --name fantastices -p 127.0.0.1:9200:9200 elasticsearch
+        docker run -d --name fantastices -p 127.0.0.1:9200:9200 -v "$(pwd)/elasticsearch.yml":/usr/share/elasticsearch/config/elasticsearch.yml elasticsearch
     else
         echo "Restarting ElasticSearch Container"
 

@@ -26,3 +26,15 @@ https://github.com/parisholley/wordpress-fantastic-elasticsearch/wiki
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Click the 'ElasticSearch' menu item and follow the instructions on each section to configure the plugin. (be sure to save on each section)
 4. Select "Enable" on "Server Settings" when you are ready for it to go live.
+
+## Configure ElasticSearch
+
+In order to use the [_update_by_query](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update-by-query.html) API call you need to enable inline scripting in your elasticsearch.yml file.
+
+Add the following lines to your elasticsearch.yml file:
+
+```
+script.engine.groovy.inline.update: on
+script.engine.groovy.inline.search: on
+script.engine.groovy.inline.aggs: on
+```
