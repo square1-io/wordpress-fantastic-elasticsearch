@@ -385,6 +385,10 @@ class Indexer
 			$settings['timeout'] = Config::option('server_timeout_read') ?: 1;
 		}
 
+		// Required as of ES 6.0, content sniffing no longer enough:
+		// - https://www.elastic.co/blog/strict-content-type-checking-for-elasticsearch-rest-requests
+		$settings['connections']['config']['headers'] = ['Content-Type' => 'application/json'];
+
 		// Allow custom settings to be passed by users who want to.
 		$settings = apply_filters('indexer_client_settings', $settings);
 
