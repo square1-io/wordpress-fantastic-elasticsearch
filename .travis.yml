@@ -4,6 +4,6 @@ php:
 services:
   - docker
 before_script:
-  - docker pull elasticsearch:6.2.2
+  - docker pull docker.elastic.co/elasticsearch/elasticsearch:6.2.2
   - docker run -d -p 127.0.0.1:9200:9200 -v "$(pwd)/elasticsearch.yml":/usr/share/elasticsearch/config/elasticsearch.yml elasticsearch
   - sleep 15
