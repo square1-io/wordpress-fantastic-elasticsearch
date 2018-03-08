@@ -1,7 +1,7 @@
 <?php
 namespace elasticsearch;
 
-abstract class BaseTestCase extends \PHPUnit_Framework_TestCase{
+abstract class BaseTestCase extends \PHPUnit\Framework\TestCase{
 	protected function setUp()
 	{
 		global $wp_query, $blog_id, $wpdb;
